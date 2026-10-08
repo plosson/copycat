@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 # Builds, signs, notarizes and publishes Copycat to GitHub Releases.
 # Usage: DEVELOPMENT_TEAM=XXXXXXXXXX scripts/release.sh 1.0.0
-# Needs: a "Developer ID Application" certificate in the keychain, and a notarytool profile created once with
-#   xcrun notarytool store-credentials copycat-notary --apple-id <id> --team-id <team>
+# Needs: a "Developer ID Application" certificate in the keychain, and asc (App Store Connect CLI) signed in
+#   with an API key (`asc auth status`).
 set -euo pipefail
 
 VERSION="${1:-}"
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "usage: scripts/release.sh <major.minor.patch>" >&2; exit 2; }
 : "${DEVELOPMENT_TEAM:?set DEVELOPMENT_TEAM to your Apple team ID}"
-NOTARY_PROFILE="${NOTARY_PROFILE:-copycat-notary}"
 REPO="plosson/copycat"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -50,7 +49,14 @@ xcodebuild -exportArchive \
 APP="$BUILD/export/Copycat.app"
 
 ditto -c -k --keepParent "$APP" "$BUILD/notarize.zip"
-xcrun notarytool submit "$BUILD/notarize.zip" --keychain-profile "$NOTARY_PROFILE" --wait
+# asc exits 0 whatever Apple decides, so ask for the final status and stop unless it is Accepted.
+SUBMISSION_ID="$(asc notarization submit --file "$BUILD/notarize.zip" --wait | jq -r '.data.id // .id')"
+STATUS="$(asc notarization status --id "$SUBMISSION_ID" | jq -r '.data.attributes.status')"
+echo "Notarization $SUBMISSION_ID: $STATUS"
+if [[ "$STATUS" != "Accepted" ]]; then
+  asc notarization log --id "$SUBMISSION_ID" >&2 || true
+  echo "notarization was not accepted" >&2; exit 1
+fi
 xcrun stapler staple "$APP"
 spctl --assess --type execute --verbose "$APP"
 
