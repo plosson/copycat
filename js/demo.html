@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Copycat demo</title>
+  <style>
+    body { font: 16px system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; }
+    button { font: inherit; padding: .5rem 1rem; margin: .25rem 0; }
+    button[hidden] { display: none; }
+    code { background: #eee; padding: 0 .25rem; }
+  </style>
+  <script src="copycat.js"></script>
+</head>
+<body>
+  <h1>Copycat demo</h1>
+  <p>Status: <code id="status">checking…</code></p>
+  <p>
+    <button class="copy" hidden data-url="https://upload.wikimedia.org/wikipedia/commons/2/2c/Rotating_earth_%28large%29.gif" data-name="earth.gif">Copy animated GIF</button><br>
+    <button class="copy" hidden data-url="https://www.w3schools.com/html/mov_bbb.mp4" data-name="bunny.mp4">Copy MP4 video</button>
+  </p>
+  <p>Result: <code id="result">–</code></p>
+  <script>
+    (async () => {
+      const status = await Copycat.status();
+      document.getElementById("status").textContent = status;
+      // Show Copy when Copycat is ready or may be (Chrome has not asked for local network access yet).
+      for (const button of document.querySelectorAll(".copy")) {
+        button.hidden = status === "absent";
+        button.addEventListener("click", async () => {
+          document.getElementById("result").textContent = "copying…";
+          const result = await Copycat.copy(button.dataset.url, { name: button.dataset.name });
+          document.getElementById("result").textContent = JSON.stringify(result);
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
