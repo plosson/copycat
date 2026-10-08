@@ -1,0 +1,35 @@
+name: Copycat
+options:
+  bundleIdPrefix: com.plosson
+  deploymentTarget:
+    macOS: "14.0"
+packages:
+  CopycatCore:
+    path: CopycatCore
+targets:
+  Copycat:
+    type: application
+    platform: macOS
+    sources: [App]
+    dependencies:
+      - package: CopycatCore
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Copycat
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSUIElement: true
+        LSMinimumSystemVersion: "14.0"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.plosson.copycat
+        MARKETING_VERSION: 1.0.0
+        CURRENT_PROJECT_VERSION: 1
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        SWIFT_VERSION: 5.0
+      configs:
+        Release:
+          CODE_SIGN_IDENTITY: Developer ID Application
