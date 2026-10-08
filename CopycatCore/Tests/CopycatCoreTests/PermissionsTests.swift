@@ -204,12 +204,32 @@ final class GatekeeperTests: XCTestCase {
 
     func testClosingThePromptIsTimeoutAndOriginStaysUnknown() async {
         let prompter = FakePrompter(.dismissed)
-        let g = gate(prompter)
+        let clock = Clock()
+        let g = gate(prompter, clock: clock)
         await assertAdmit(g, a, throws: .timeout)
         XCTAssertEqual(store.get(a), .prompt)
+        clock.current += 61
         await assertAdmit(g, a, throws: .timeout)
         let asked = await prompter.asked
-        XCTAssertEqual(asked.count, 2, "a closed prompt can be asked again")
+        XCTAssertEqual(asked.count, 2, "a closed prompt can be asked again later")
+    }
+
+    func testDismissedOriginCannotPromptAgainForAMinute() async {
+        let prompter = FakePrompter(.dismissed)
+        let clock = Clock()
+        let g = gate(prompter, clock: clock)
+        await assertAdmit(g, a, throws: .timeout)
+        clock.current += 59
+        await assertAdmit(g, a, throws: .busy)
+        let asked = await prompter.asked
+        XCTAssertEqual(asked, [a], "a site must not pop the prompt again right after it was closed")
+    }
+
+    func testUnansweredPromptAlsoStartsTheCooldown() async {
+        let prompter = FakePrompter(nil)
+        let g = gate(prompter, timeout: 0.2)
+        await assertAdmit(g, a, throws: .timeout)
+        await assertAdmit(g, a, throws: .busy)
     }
 
     func testUnansweredPromptTimesOutAndClosesTheWindow() async {

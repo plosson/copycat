@@ -1,3 +1,4 @@
+import CoreServices
 import Foundation
 import UniformTypeIdentifiers
 
@@ -71,6 +72,7 @@ public final class CopyPipeline: CopyService, @unchecked Sendable {
             let name = TypeDetector.fileName(hint: request.name, url: url, type: type)
             let file = fetched.fileURL.deletingLastPathComponent().appendingPathComponent(name)
             try FileManager.default.moveItem(at: fetched.fileURL, to: file)
+            try Self.quarantine(file, from: url)
             try writer.write(fileURL: file, type: type)
             pulse.cancel()
             await gatekeeper.finish(origin)
@@ -83,5 +85,17 @@ public final class CopyPipeline: CopyService, @unchecked Sendable {
             feedback.failed(copyError)
             throw copyError
         }
+    }
+
+    /// Marks the file as downloaded from the web, so Gatekeeper checks anything opened from it.
+    static func quarantine(_ file: URL, from source: URL) throws {
+        var values = URLResourceValues()
+        values.quarantineProperties = [
+            kLSQuarantineTypeKey as String: kLSQuarantineTypeWebDownload as String,
+            kLSQuarantineAgentNameKey as String: "Copycat",
+            kLSQuarantineDataURLKey as String: source,
+        ]
+        var file = file
+        try file.setResourceValues(values)
     }
 }

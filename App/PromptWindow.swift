@@ -51,6 +51,8 @@ struct PromptView: View {
     let origin: String
     let deny: () -> Void
     let allow: () -> Void
+    /// The buttons ignore clicks for a moment, so a page cannot open the prompt just under a click it provoked.
+    @State private var armed = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -62,9 +64,14 @@ struct PromptView: View {
                 Button("Deny", action: deny)
                 Button("Allow", action: allow)
             }
+            .disabled(!armed)
         }
         .padding(20)
         .frame(width: 400)
+        .task {
+            try? await Task.sleep(nanoseconds: 750_000_000)
+            armed = true
+        }
     }
 }
 

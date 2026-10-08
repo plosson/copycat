@@ -59,21 +59,26 @@ public actor Gatekeeper {
     let promptTimeout: TimeInterval
     let maxCopies: Int
     let window: TimeInterval
+    let promptCooldown: TimeInterval
     let now: @Sendable () -> Date
 
     private var promptOpen = false
     private var inFlight: Set<String> = []
     private var history: [String: [Date]] = [:]
+    /// When each origin's prompt was last closed without an answer, so a page cannot pop it again at once.
+    private var dismissed: [String: Date] = [:]
 
     public init(
         store: PermissionStore, prompter: Prompter, promptTimeout: TimeInterval = 60,
-        maxCopies: Int = 30, window: TimeInterval = 60, now: @escaping @Sendable () -> Date = { Date() }
+        maxCopies: Int = 30, window: TimeInterval = 60, promptCooldown: TimeInterval = 60,
+        now: @escaping @Sendable () -> Date = { Date() }
     ) {
         self.store = store
         self.prompter = prompter
         self.promptTimeout = promptTimeout
         self.maxCopies = maxCopies
         self.window = window
+        self.promptCooldown = promptCooldown
         self.now = now
     }
 
@@ -91,6 +96,7 @@ public actor Gatekeeper {
             try reserve(origin)
         case .prompt:
             if promptOpen { throw CopyError.busy }
+            if let last = dismissed[origin], now().timeIntervalSince(last) < promptCooldown { throw CopyError.busy }
             try reserve(origin)
             promptOpen = true
             let answer = await askWithTimeout(origin)
@@ -103,6 +109,7 @@ public actor Gatekeeper {
                 finish(origin)
                 throw CopyError.denied
             case .dismissed:
+                dismissed[origin] = now()
                 finish(origin)
                 throw CopyError.timeout
             }

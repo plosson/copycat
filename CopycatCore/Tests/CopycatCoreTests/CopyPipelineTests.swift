@@ -81,6 +81,16 @@ final class CopyPipelineTests: XCTestCase {
         XCTAssertEqual(feedback.events, ["succeeded"])
     }
 
+    func testCopiedFileIsQuarantinedLikeABrowserDownload() async throws {
+        fetcher.bytes = Data("PK\u{3}\u{4}not really a zip".utf8)
+        fetcher.contentType = nil
+        try await pipeline().copy(CopyRequest(url: "https://a.com/x", type: "application/zip"), from: origin)
+        let stored = try XCTUnwrap(pasteboard.pasteboardItems?.first?.string(forType: .fileURL))
+        let file = try XCTUnwrap(URL(string: stored))
+        let size = getxattr(file.path, "com.apple.quarantine", nil, 0, 0, 0)
+        XCTAssertGreaterThan(size, 0, "the file must carry com.apple.quarantine so Gatekeeper checks anything opened from it")
+    }
+
     func testDeniedOriginNeverFetchesAndGivesNoFeedback() async {
         store.set(origin, .denied)
         await assertCopy(pipeline(), CopyRequest(url: "https://a.com/a.gif"), throws: .denied)
