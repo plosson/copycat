@@ -19,7 +19,8 @@ struct MenuBarIcon: View {
 
     var body: some View {
         switch state {
-        case .idle: Image(systemName: "doc.on.clipboard")
+        // Template image (22 pt canvas): macOS tints it for light/dark menu bars.
+        case .idle: Image("CopycatMenu").renderingMode(.template).accessibilityLabel("Copycat")
         case .working: Image(systemName: "arrow.down.doc").symbolEffect(.pulse)
         case .succeeded: Image(systemName: "checkmark.circle")
         case .failed: Image(systemName: "exclamationmark.triangle")
