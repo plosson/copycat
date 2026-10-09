@@ -6,6 +6,8 @@ options:
 packages:
   CopycatCore:
     path: CopycatCore
+  HoulahopUpdater:
+    path: scripts/mac-release
 targets:
   Copycat:
     type: application
@@ -13,6 +15,7 @@ targets:
     sources: [App]
     dependencies:
       - package: CopycatCore
+      - package: HoulahopUpdater
     info:
       path: App/Info.plist
       properties:
@@ -21,6 +24,10 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSUIElement: true
         LSMinimumSystemVersion: "14.0"
+        # Sparkle: the release script uploads appcast.xml to each GitHub release, so "latest" always points to the newest one.
+        SUFeedURL: https://github.com/plosson/copycat/releases/latest/download/appcast.xml
+        SUPublicEDKey: jTyx8CP85LrSQRllNXirGNf1OFEA5vO/bDBMJrD9nSs=
+        SUEnableAutomaticChecks: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.plosson.copycat

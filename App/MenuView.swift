@@ -1,9 +1,11 @@
 import AppKit
 import CopycatCore
+import HoulahopUpdater
 import SwiftUI
 
 struct MenuView: View {
     @ObservedObject var model: AppModel
+    let updater: Updater
 
     var body: some View {
         Text(model.serverError ?? "Copycat is running")
@@ -25,6 +27,7 @@ struct MenuView: View {
         Divider()
 
         Text("Version \(model.version)")
+        CheckForUpdatesButton(updater: updater)
         Button("Quit Copycat") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
     }

@@ -24,5 +24,11 @@
 	<string>14.0</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/plosson/copycat/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>jTyx8CP85LrSQRllNXirGNf1OFEA5vO/bDBMJrD9nSs=</string>
 </dict>
 </plist>

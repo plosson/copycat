@@ -1,12 +1,14 @@
+import HoulahopUpdater
 import SwiftUI
 
 @main
 struct CopycatApp: App {
     @StateObject private var model = AppModel()
+    @StateObject private var updater = Updater()
 
     var body: some Scene {
         MenuBarExtra {
-            MenuView(model: model)
+            MenuView(model: model, updater: updater)
         } label: {
             MenuBarIcon(state: model.icon)
         }
